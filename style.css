@@ -1,0 +1,260 @@
+/* BODY & GENERAL STYLING */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0 12px;
+}
+
+/* PAGE HEADER */
+h1 {
+    margin: 32px 0 20px 0;
+    color: #ED1C24;
+    font-size: 28px;
+    letter-spacing: 0.4px;
+}
+
+/* FORM CONTAINER */
+.form-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px; /* space between inputs */
+    margin: 14px auto;
+    max-width: 1200px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.06);
+}
+
+/* INPUT FIELDS */
+.form-container input, .form-container select {
+    padding: 8px 10px;
+    width: 150px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* BUTTONS */
+button {
+    padding: 10px 20px;
+    background-color: #ED1C24;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+/* TABLE CONTAINER FOR HORIZONTAL SCROLL */
+.table-wrapper {
+    overflow-x: auto;
+    margin: 26px auto;
+    max-width: 98%;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    padding: 12px;
+}
+
+/* Controls layout (month + edit/save) */
+.table-controls { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:28px 0 }
+.month-select-wrap { background:#fff; border:1px solid #ddd; padding:4px 8px; border-radius:6px; box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
+.month-select-wrap select { border:0; outline:none; padding:6px 28px 6px 8px; background:transparent; appearance:none; -webkit-appearance:none; font-size:14px }
+.month-select-wrap { position:relative }
+.month-select-wrap:after{ content:"\25BE"; position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none; color:#666 }
+
+.control-btn{ padding:8px 12px; border-radius:6px; border:none; cursor:pointer; font-weight:600 }
+.control-btn.edit-btn{ background:#ED1C24; color:#fff }
+.control-btn.save-btn{ background:#27ae60; color:#fff }
+
+/* TABLE STYLING */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    font-size: 13px;
+    min-width: 1200px; /* ensures scroll for many columns */
+}
+
+/* PERIOD MULTI INPUT */
+.period-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.period-cell div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* per-cell wrapper used for date and period cells */
+.cell-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.cell-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.period-cell input {
+    width: 80px;
+    font-size: 12px;
+    text-align: center;
+    padding: 4px 6px;
+}
+
+th, td {
+    padding: 8px 10px;
+    border: 1px solid #eee;
+    text-align: center;
+}
+
+th {
+    background-color: #ED1C24;
+    color: white;
+    position: sticky; /* keep headers visible on scroll */
+    top: 0;
+    z-index: 3;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* zebra and hover */
+tbody tr:nth-child(even) { background: #fbfbfb }
+tbody tr:hover { background: #f4fbff }
+
+/* Contenteditable cells styling */
+[contenteditable="true"] {
+    outline: none;
+    border: none;
+}
+
+/* per-cell edit/save buttons visible by default (no row-level actions) */
+.cell-edit, .cell-save {
+    display: none !important; /* permanently hide per-cell buttons to reduce clutter */
+    margin-left:6px;
+    padding: 4px 8px;
+    background: #ED1C24;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+}
+
+.cell-save { background: #27ae60; }
+
+.cell-edit:hover, .cell-save:hover { opacity: 0.9; }
+
+/* make date and text inputs consistent */
+input[type="date"], input[type="text"] {
+    padding: 5px 6px;
+    border-radius: 4px;
+    border: 1px solid #cfcfcf;
+}
+
+/* tighten table spacing */
+th, td {
+    padding: 6px;
+    border: 1px solid #e6e6e6;
+    text-align: center;
+}
+
+/* ACTION BUTTONS IN TABLE */
+table button {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+/* RESPONSIVE FIX */
+@media (max-width: 768px) {
+    .form-container input, .form-container select {
+        width: 100px;
+        font-size: 12px;
+        padding: 6px;
+    }
+
+    table {
+        font-size: 10px;
+    }
+}
+
+/* Add-row button style (large red) */
+.add-row-btn{
+    background: #ED1C24;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.08);
+}
+
+.add-row-btn:hover{ opacity: 0.95 }
+
+/* Delete row icon button (visible only in edit mode) */
+.delete-row{
+    display:flex;
+    width:40px;
+    height:40px;
+    padding:0;
+    background:#ED1C24;
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 2px 4px rgba(237, 28, 36, 0.2);
+    line-height:1;
+    transition: all 0.2s ease;
+    position: relative;
+    flex-shrink: 0;
+    margin:auto;
+    vertical-align:middle;
+}
+
+.delete-row svg { 
+    width:18px; 
+    height:18px; 
+    display:block; 
+    stroke-width:1.6;
+    transition: transform 0.2s ease;
+    margin:auto;
+    flex-shrink:0;
+}
+
+.delete-row:hover {
+    background: #d01a1e;
+    box-shadow: 0 4px 8px rgba(237, 28, 36, 0.35);
+    transform: scale(1.08);
+}
+
+.delete-row:active {
+    transform: scale(0.96);
+}
+
+.delete-row:hover svg {
+    transform: rotate(10deg) scale(1.1);
+}
+
+.row-delete { 
+    text-align:center; 
+    vertical-align: middle;
+    padding: 8px !important;
+}

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HDO Salary Monitoring</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>HDO Salary Monitoring</h1>
+
+<!-- MONTH SELECT (populated dynamically and synced to Philippine time) -->
+<!-- moved into controls bar for better layout -->
+
+<div class="table-controls" style="margin:8px 0;align-items:center;display:flex;gap:12px;justify-content:space-between;">
+    <div class="left-controls" style="display:flex;align-items:center;gap:12px;">
+        <div class="month-select-wrap">
+            <select id="monthSelect" onchange="updateMonth()"></select>
+        </div>
+    </div>
+    <div class="right-controls" style="display:flex;align-items:center;gap:8px;">
+        <button id="toggleEditAll" class="control-btn edit-btn">Edit</button>
+        <button id="saveAll" class="control-btn save-btn" style="display:none">Save</button>
+    </div>
+</div>
+
+<div class="table-wrapper">
+<table>
+    <thead>
+        <tr>
+            <th>Actions</th>
+            <th>Hospital</th>
+            <th>Department</th>
+            <th>Month</th>
+            <th>Period</th>
+            <th>DTR/AR Submitted</th>
+            <th>(MISO) Initial Draft</th>
+            <th>(MISO) Final Draft</th>
+            <th>(PHRMO) Printing</th>
+            <th>(PHO) Attachment</th>
+            <th>Head Dept Signatory</th>
+            <th>(PHO) Checking</th>
+            <th>PBO</th>
+            <th>OPAC</th>
+            <th>OPAC Pending</th>
+            <th>OPAC Return</th>
+            <th>PTO</th>
+            <th>PHRMO</th>
+            <th>GO Admin / GO Exec</th>
+            <th>PTO</th>
+            <th>Claimed thru ATM</th>
+        </tr>
+    </thead>
+
+    <tbody id="tableBody"></tbody>
+</table>
+</div>
+
+<div style="text-align:center; margin:14px 0;">
+    <button onclick="addNewRow()" class="add-row-btn">+ Add New Row</button>
+</div>
+
+<script>
+const hospitals = [
+    { name: "BDH", dept: "PDRRMO" },
+    { name: "NDH", dept: "PDRRMO" },
+    { name: "MDH", dept: "PDRRMO" },
+    { name: "NURSE", dept: "PDRRMO" },
+    { name: "SPCDH", dept: "PDRRMO" },
+    { name: "LDH", dept: "GO EXEC" },
+    { name: "GCMDH", dept: "GO EXEC" },
+    { name: "DRJPRMDH", dept: "GO EXEC" },
+    { name: "SPDH", dept: "GO EXEC" },
+    { name: "LMC", dept: "GO EXEC" }
+];
+
+// CREATE TABLE
+function createTable() {
+    let table = document.getElementById("tableBody");
+    table.innerHTML = "";
+
+    hospitals.forEach((h, rowIndex) => {
+        let row = document.createElement("tr");
+        row.setAttribute('data-row', rowIndex);
+
+        row.innerHTML = `
+            <td class="row-delete">
+                    <button class="delete-row" data-row="${rowIndex}" style="display:none" aria-label="Delete row">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M9 2h6v1H9V2Z"/>
+                            <path d="M4 4h16v2H4V4Z"/>
+                            <path d="M6 7h12a1 1 0 011 1v11a2 2 0 01-2 2H8a2 2 0 01-2-2V8a1 1 0 011-1Z"/>
+                            <path d="M9 10v8M12 10v8M15 10v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </td>
+            <td class="hospital">${h.name}</td>
+            <td><span class="dept-badge">${h.dept}</span></td>
+            <td class="month">${document.getElementById("monthSelect").value}</td>
+
+            <td class="period-cell">
+                <div>
+                    <input type="text" placeholder="1-15" data-row="${rowIndex}" data-col="period1" disabled>
+                    <button class="cell-edit" data-row="${rowIndex}" data-col="period1">Edit</button>
+                    <button class="cell-save" data-row="${rowIndex}" data-col="period1" style="display:none">Save</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="16-30" data-row="${rowIndex}" data-col="period2" disabled>
+                    <button class="cell-edit" data-row="${rowIndex}" data-col="period2">Edit</button>
+                    <button class="cell-save" data-row="${rowIndex}" data-col="period2" style="display:none">Save</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="Others" data-row="${rowIndex}" data-col="period3" disabled>
+                    <button class="cell-edit" data-row="${rowIndex}" data-col="period3">Edit</button>
+                    <button class="cell-save" data-row="${rowIndex}" data-col="period3" style="display:none">Save</button>
+                </div>
+            </td>
+
+            ${generateDateInputs(rowIndex)}
+            
+        `;
+
+        table.appendChild(row);
+    });
+
+    loadData();
+}
+
+// GENERATE DATE INPUTS
+function generateDateInputs(rowIndex) {
+    let html = "";
+    for (let col = 0; col < 16; col++) {
+        html += `<td>
+            <div class="cell-wrapper">
+                <div>
+                    <input type="date" data-row="${rowIndex}" data-col="date${col}_p1" disabled>
+                    <button class="cell-edit" data-row="${rowIndex}" data-col="date${col}_p1">Edit</button>
+                    <button class="cell-save" data-row="${rowIndex}" data-col="date${col}_p1" style="display:none">Save</button>
+                </div>
+                <div>
+                    <input type="date" data-row="${rowIndex}" data-col="date${col}_p2" disabled>
+                    <button class="cell-edit" data-row="${rowIndex}" data-col="date${col}_p2">Edit</button>
+                    <button class="cell-save" data-row="${rowIndex}" data-col="date${col}_p2" style="display:none">Save</button>
+                </div>
+                <div>
+                    <input type="date" data-row="${rowIndex}" data-col="date${col}_p3" disabled>
+                    <button class="cell-edit" data-row="${rowIndex}" data-col="date${col}_p3">Edit</button>
+                    <button class="cell-save" data-row="${rowIndex}" data-col="date${col}_p3" style="display:none">Save</button>
+                </div>
+            </div>
+        </td>`;
+    }
+    return html;
+}
+
+// Populate month select with months across a small range and select Manila current month
+function getManilaMonthYear() {
+    // Use Intl to get parts in Asia/Manila timezone
+    const fmt = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: 'numeric', day: 'numeric' });
+    const parts = fmt.formatToParts(new Date());
+    let year = null, month = null;
+    parts.forEach(p => {
+        if (p.type === 'year') year = parseInt(p.value, 10);
+        if (p.type === 'month') month = parseInt(p.value, 10);
+    });
+    return { year, month };
+}
+
+function populateMonthSelect() {
+    const sel = document.getElementById('monthSelect');
+    sel.innerHTML = '';
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    const now = getManilaMonthYear();
+
+    for (let m = 1; m <= 12; m++) {
+        const text = months[m-1];
+        let opt = document.createElement('option');
+        opt.value = text;
+        opt.innerText = text;
+        // mark selected when matches Manila current month
+        if (m === now.month) opt.selected = true;
+        sel.appendChild(opt);
+    }
+}
+
+// ADD NEW ROW
+function addNewRow() {
+    let table = document.getElementById("tableBody");
+    let rowIndex = table.rows.length;
+
+    let row = document.createElement("tr");
+    row.setAttribute('data-row', rowIndex);
+
+    row.innerHTML = `
+        <td class="row-delete">
+            <button class="delete-row" data-row="${rowIndex}" style="display:none" aria-label="Delete row">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M9 2h6v1H9V2Z"/>
+                    <path d="M4 4h16v2H4V4Z"/>
+                    <path d="M6 7h12a1 1 0 011 1v11a2 2 0 01-2 2H8a2 2 0 01-2-2V8a1 1 0 011-1Z"/>
+                    <path d="M9 10v8M12 10v8M15 10v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </td>
+        <td class="hospital">New Hospital</td>
+        <td><span class="dept-badge">Department</span></td>
+        <td class="month">${document.getElementById("monthSelect").value}</td>
+
+        <td class="period-cell">
+            <div>
+                <input type="text" placeholder="1-15" data-row="${rowIndex}" data-col="period1" disabled>
+                <button class="cell-edit" data-row="${rowIndex}" data-col="period1">Edit</button>
+                <button class="cell-save" data-row="${rowIndex}" data-col="period1" style="display:none">Save</button>
+            </div>
+            <div>
+                <input type="text" placeholder="16-30" data-row="${rowIndex}" data-col="period2" disabled>
+                <button class="cell-edit" data-row="${rowIndex}" data-col="period2">Edit</button>
+                <button class="cell-save" data-row="${rowIndex}" data-col="period2" style="display:none">Save</button>
+            </div>
+            <div>
+                <input type="text" placeholder="Others" data-row="${rowIndex}" data-col="period3" disabled>
+                <button class="cell-edit" data-row="${rowIndex}" data-col="period3">Edit</button>
+                <button class="cell-save" data-row="${rowIndex}" data-col="period3" style="display:none">Save</button>
+            </div>
+        </td>
+
+        ${generateDateInputs(rowIndex)}
+        
+    `;
+
+    table.appendChild(row);
+}
+
+// SAVE a specific row's data to localStorage
+function saveRow(rowIndex) {
+    let data = JSON.parse(localStorage.getItem("hdoData")) || {};
+    if (!data[rowIndex]) data[rowIndex] = {};
+
+    let tr = document.querySelector(`tr[data-row="${rowIndex}"]`);
+    if (!tr) return;
+
+    // hospital and dept
+    let hospitalCell = tr.querySelector('.hospital');
+    let deptBadge = tr.querySelector('.dept-badge');
+    let monthCell = tr.querySelector('.month');
+
+    data[rowIndex]['hospital'] = hospitalCell ? hospitalCell.innerText.trim() : '';
+    data[rowIndex]['dept'] = deptBadge ? deptBadge.innerText.trim() : '';
+    data[rowIndex]['month'] = monthCell ? monthCell.innerText.trim() : '';
+
+    // inputs
+    tr.querySelectorAll('input[data-col]').forEach(input => {
+        let col = input.dataset.col;
+        data[rowIndex][col] = input.value;
+    });
+
+    // period text inputs
+    tr.querySelectorAll('input[type="text"][data-col]').forEach(input => {
+        let col = input.dataset.col;
+        data[rowIndex][col] = input.value;
+    });
+
+    localStorage.setItem("hdoData", JSON.stringify(data));
+}
+
+// Click handler for Edit/Save buttons
+document.addEventListener('click', function (e) {
+    // per-cell edit
+    if (e.target.classList.contains('cell-edit')) {
+        let rowIndex = e.target.dataset.row;
+        let col = e.target.dataset.col;
+        let tr = document.querySelector(`tr[data-row="${rowIndex}"]`);
+        if (!tr) return;
+
+        let input = tr.querySelector(`input[data-col="${col}"]`);
+        if (!input) return;
+
+        input.removeAttribute('disabled');
+        e.target.style.display = 'none';
+        let saveBtn = tr.querySelector(`button.cell-save[data-col="${col}"]`);
+        if (saveBtn) saveBtn.style.display = '';
+        return;
+    }
+
+    // per-cell save
+    if (e.target.classList.contains('cell-save')) {
+        let rowIndex = e.target.dataset.row;
+        let col = e.target.dataset.col;
+        let tr = document.querySelector(`tr[data-row="${rowIndex}"]`);
+        if (!tr) return;
+
+        let input = tr.querySelector(`input[data-col="${col}"]`);
+        if (!input) return;
+
+        // save single cell
+        let data = JSON.parse(localStorage.getItem("hdoData")) || {};
+        if (!data[rowIndex]) data[rowIndex] = {};
+        data[rowIndex][col] = input.value;
+        localStorage.setItem("hdoData", JSON.stringify(data));
+
+        input.setAttribute('disabled', '');
+        // ensure saved date text is black
+        input.style.color = '#000';
+        e.target.style.display = 'none';
+        let editBtn = tr.querySelector(`button.cell-edit[data-col="${col}"]`);
+        if (editBtn) editBtn.style.display = '';
+        return;
+    }
+    
+    // delete row
+    if (e.target.classList.contains('delete-row') || e.target.closest('.delete-row')) {
+        let btn = e.target.classList.contains('delete-row') ? e.target : e.target.closest('.delete-row');
+        let rowIndex = parseInt(btn.dataset.row);
+        if (isNaN(rowIndex)) return;
+        if (!confirm('Delete this row?')) return;
+        deleteRow(rowIndex);
+        return;
+    }
+
+    // (row-level edit/save removed) per-cell controls handle editing and saving single fields
+});
+
+// LOAD DATA (inputs and selects)
+function loadData() {
+    let data = JSON.parse(localStorage.getItem("hdoData")) || {};
+
+    // If there are saved rows beyond current table length, add them
+    let table = document.getElementById('tableBody');
+    let savedIndexes = Object.keys(data).map(k => parseInt(k)).filter(n => !isNaN(n));
+    if (savedIndexes.length) {
+        let maxSaved = Math.max(...savedIndexes);
+        while (table.rows.length <= maxSaved) addNewRow();
+    }
+
+    // Clear all inputs first
+    table.querySelectorAll('input[data-col]').forEach(input => {
+        input.value = '';
+        input.style.color = '#999';
+    });
+
+    let selectedMonth = document.getElementById("monthSelect").value;
+
+    // populate values for the selected month
+    Object.keys(data).forEach(row => {
+        let tr = document.querySelector(`tr[data-row="${row}"]`);
+        if (!tr) return;
+
+        let entry = data[row];
+        
+        // Only load data if it matches the selected month
+        if (entry['month'] && entry['month'] !== selectedMonth) return;
+        
+        if (entry['hospital']) tr.querySelector('.hospital').innerText = entry['hospital'];
+        if (entry['dept'] && tr.querySelector('.dept-badge')) tr.querySelector('.dept-badge').innerText = entry['dept'];
+        if (entry['month'] && tr.querySelector('.month')) tr.querySelector('.month').innerText = entry['month'];
+
+        tr.querySelectorAll('input[data-col]').forEach(input => {
+            let col = input.dataset.col;
+            if (entry[col]) {
+                input.value = entry[col];
+                // mark loaded saved dates as black
+                input.style.color = '#000';
+            }
+        });
+    });
+}
+
+// Delete a row by index, reindex rows and save remaining data
+function deleteRow(rowIndex) {
+    let table = document.getElementById('tableBody');
+    let tr = document.querySelector(`tr[data-row="${rowIndex}"]`);
+    if (tr) tr.remove();
+
+    // rebuild data object from remaining rows in order and reindex dataset
+    let data = {};
+    let rows = Array.from(table.querySelectorAll('tr'));
+    rows.forEach((row, i) => {
+        row.setAttribute('data-row', i);
+        // hospital/dept/month
+        let hosp = row.querySelector('.hospital');
+        let dept = row.querySelector('.dept-badge');
+        let month = row.querySelector('.month');
+        data[i] = {};
+        data[i]['hospital'] = hosp ? hosp.innerText.trim() : '';
+        data[i]['dept'] = dept ? dept.innerText.trim() : '';
+        data[i]['month'] = month ? month.innerText.trim() : '';
+        // inputs
+        row.querySelectorAll('input[data-col]').forEach(input => {
+            let col = input.dataset.col;
+            data[i][col] = input.value;
+            // update input's data-row to new index
+            input.dataset.row = i;
+        });
+        // update delete button data-row
+        let del = row.querySelector('button.delete-row');
+        if (del) del.dataset.row = i;
+    });
+
+    localStorage.setItem('hdoData', JSON.stringify(data));
+}
+
+// UPDATE MONTH
+function updateMonth() {
+    let selectedMonth = document.getElementById("monthSelect").value;
+    
+    // Save current data BEFORE switching months (with current month from cells)
+    let table = document.getElementById('tableBody');
+    let rows = Array.from(table.querySelectorAll('tr'));
+    let data = JSON.parse(localStorage.getItem("hdoData")) || {};
+    
+    rows.forEach((row) => {
+        let rowIndex = row.getAttribute('data-row');
+        if (!rowIndex) return;
+        
+        if (!data[rowIndex]) data[rowIndex] = {};
+        // Save hospital/dept/month from current visible cells
+        let hosp = row.querySelector('.hospital');
+        let dept = row.querySelector('.dept-badge');
+        let monthCell = row.querySelector('.month');
+        
+        data[rowIndex]['hospital'] = hosp ? hosp.innerText.trim() : '';
+        data[rowIndex]['dept'] = dept ? dept.innerText.trim() : '';
+        // IMPORTANT: Keep existing month value - don't overwrite with DOM cell
+        // (DOM cell was already updated to new month in previous switch)
+        if (!data[rowIndex]['month'] && monthCell) {
+            data[rowIndex]['month'] = monthCell.innerText.trim();
+        }
+        
+        // Save only non-empty input values (preserve existing data for empty inputs)
+        row.querySelectorAll('input[data-col]').forEach(input => {
+            let col = input.dataset.col;
+            if (input.value) {  // Only save if input has content
+                data[rowIndex][col] = input.value;
+            }
+        });
+    });
+    
+    localStorage.setItem("hdoData", JSON.stringify(data));
+
+    // NOW switch to the new month
+    document.querySelectorAll(".month").forEach(cell => {
+        cell.innerText = selectedMonth;
+    });
+    
+    // Reload data for the selected month
+    loadData();
+}
+
+// INIT
+populateMonthSelect();
+createTable();
+
+// Global Edit All toggle (shows/hides per-cell Edit buttons)
+document.getElementById('toggleEditAll').addEventListener('click', function(){
+    let btn = this;
+    let active = btn.dataset.active === '1';
+    if (!active) {
+        // enter global edit mode: enable all inputs
+        document.querySelectorAll('input[data-col]').forEach(i => i.removeAttribute('disabled'));
+        // make hospital and dept editable
+        document.querySelectorAll('.hospital').forEach(h => h.setAttribute('contenteditable', 'true'));
+        document.querySelectorAll('.dept-badge').forEach(d => d.parentElement.setAttribute('contenteditable', 'true'));
+        // show per-row delete buttons
+        document.querySelectorAll('.delete-row').forEach(b => b.style.display = 'inline-block');
+        // hide the red Edit button and show the green Save button
+        btn.dataset.active = '1';
+        btn.style.display = 'none';
+        let saveBtn = document.getElementById('saveAll');
+        if (saveBtn) saveBtn.style.display = 'inline-block';
+    }
+});
+
+// Save all convenience (green button)
+document.getElementById('saveAll').addEventListener('click', function(){
+    let btn = this;
+    let table = document.getElementById('tableBody');
+    for (let r = 0; r < table.rows.length; r++) {
+        saveRow(r);
+    }
+    // disable inputs after save
+    document.querySelectorAll('input[data-col]').forEach(i => i.setAttribute('disabled',''));
+    // make saved dates visually distinct (black text)
+    document.querySelectorAll('input[data-col]').forEach(i => { if (i.value) i.style.color = '#000'; });
+    // make hospital and dept non-editable
+    document.querySelectorAll('.hospital').forEach(h => h.setAttribute('contenteditable', 'false'));
+    document.querySelectorAll('.dept-badge').forEach(d => d.parentElement.setAttribute('contenteditable', 'false'));
+    // hide per-row delete buttons
+    document.querySelectorAll('.delete-row').forEach(b => b.style.display = 'none');
+    // restore Edit button and hide green Save
+    let toggle = document.getElementById('toggleEditAll');
+    if (toggle) { toggle.dataset.active = '0'; toggle.innerText = 'Edit'; toggle.style.display = ''; }
+    let saveBtn = document.getElementById('saveAll');
+    if (saveBtn) saveBtn.style.display = 'none';
+    // flash saved state on green button
+    let original = btn.innerText;
+    btn.innerText = 'Saved';
+    setTimeout(() => btn.innerText = original, 1000);
+});
+</script>
+
+</body>
+</html>
